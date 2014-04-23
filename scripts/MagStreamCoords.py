@@ -44,4 +44,11 @@ for lon,lat in coords:
     RA.append(np.rad2deg(eq.ra))
     DEC.append(np.rad2deg(eq.dec))
 
-np.savez('MagStreamCoords1.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat)
+
+# sort it by DEC because that might be the best way to prioritize (by highest declinations?)
+DEC, RA, Glon, Glat, N = zip(*sorted(zip(DEC, RA, Glon, Glat, [0] * len(DEC)), reverse=True))
+
+np.savez('../code/coordinates.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat, N=N)
+
+# also save a copy here that won't be touched by the code
+np.savez('_coordinates.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat, N=N)
