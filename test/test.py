@@ -9,15 +9,17 @@ import dish_synth
 import takespec
 
 def main():
-    """Records 1 minute of test data from the Leuschner dish.
+    """Records 1 minute of test data for a given galactic coordinate from the
+    Leuschner dish with the LO set to 1272.4MHz with the noise diode both on and
+    off. Also records data with the noise diode off and the LO set to 1268.4MHz.
     """
-    parser = argparse.ArgumentParser(description='Record test data from the dish.')
+    parser = argparse.ArgumentParser(description='Records 1 minute of test data for a given galactic coordinate from the Leuschner dish with the LO set to 1272.4MHz with the noise diode both on and off. Also records data with the noise diode off and the LO set to 1268.4MHz.')
     parser.add_argument('--home', action='store_true', default=False,
             help='run homing routine (warning, takes a few minutes)')
     parser.add_argument('--verbose', action='store_true', default=True,
             help='print verbose output')
     parser.add_argument('--lon', type=float, default=220,
-            help='LO frequency.')
+            help='Galactic longitude to point to (deg).')
     args = parser.parse_args()
 
     # Set lat and long (for Leuschner from Google Maps), and date
