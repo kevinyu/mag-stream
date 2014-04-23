@@ -37,11 +37,11 @@ RA = []
 DEC = []
 
 for lon,lat in coords:
-    g = ephem.Galactic(lon,lat,epoch='2000')
+    g = ephem.Galactic(np.deg2rad(lon), np.deg2rad(lat), epoch='2000')
     Glon.append(g.lon)
     Glat.append(g.lat)
     eq = ephem.Equatorial(g)
     RA.append(np.rad2deg(eq.ra))
     DEC.append(np.rad2deg(eq.dec))
 
-np.savez('MagStreamCoords.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat)
+np.savez('MagStreamCoords1.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat)
