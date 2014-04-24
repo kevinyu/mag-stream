@@ -32,7 +32,7 @@ def pick(max_N=1, skip=0):
         filtered = np.sum(N_filter)
     if filtered <= skip:
         # if we already have skipped everything, forget the restrictions
-        N_filter = np.ones(len(coords["N"]))
+        N_filter = np.array([True] * len(coords["N"]))
         skip = skip % len(coords["N"])
 
     return dict(

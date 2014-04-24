@@ -6,11 +6,12 @@ import time
 import threading
 import argparse
 import ephem
+import datetime
 
 # Import dish control modules
 import dish
 import dish_synth
-import take_spec
+import takespec
 
 import averager
 import picker
@@ -33,8 +34,8 @@ LO_OFF = LO_ON - 4
 
 # Initialize Observer to lat and long for Leuschner (from Google Maps)
 OBS = ephem.Observer()
-OBS.lat = 37.919481 * np.pi/180
-OBS.long = -122.153435 * np.pi/180
+OBS.lat = np.deg2rad(37.919481)
+OBS.long = np.deg2rad(-122.153435)
 
 ALT_LIMITS = np.loadtxt('alt_limits.txt')
 
@@ -131,7 +132,7 @@ def repoint(d, point, duration=300, repoint_freq=30.0):
         logger.debug('Move to telescope to (alt, az): (%s,%s)',
                 str(point.alt), str(point.az))
         try:
-            d.point(point.alt*180/np.pi, point.az*180/np.pi)
+            d.point(np.rad2deg(point.alt), np.rad2deg(point.az))
         except ValueError, e:
             logger.error('Re-pointing failed for (alt,az): (%s,%s)',
                     str(getAlt(source)),
@@ -165,8 +166,8 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     logger.debug('Recording data')
 
     # Compute number of spectra to record (integration time/3)
-    num_spec = int_time/3
-    num_spec_noise = 10/3
+    num_spec = int(int_time/3.)
+    num_spec_noise = 5 * 3
 
     # Take measurement with noise diode off at the higher LO frequency (ON frequency)
     s.set_freq(LO_ON)
@@ -214,7 +215,14 @@ def main():
     parser.add_argument('--endtime', type=str, help='datetime string in form "mm-dd-yyyy hh:mm:ss"')
     args = parser.parse_args()
 
-    if args.repoint_freq <= 12:
+    if not os.path.exists("raw"):
+        os.mkdir("raw")
+    if not os.path.exists("logs"):
+        os.mkdir("logs")
+    if not os.path.exists("data"):
+        os.mkdir("data")
+
+    if args.repoint <= 12:
         raise argparse.ArgumentTypeError("Can't repoint more often than every 12 seconds.")
 
     if args.time <= 0:
@@ -235,8 +243,8 @@ def main():
     logger.debug('LO off frequency: %s',  str(LO_OFF))
 
     # Create dish and synthesizer interfaces
-    d = init_dish(noise=args.noise, verbose=args.verbose)
-    s = init_synth(freq=args.noise, amp=args.amp, verbose=args.verbose)
+    d = init_dish(verbose=args.verbose)
+    s = init_synth(freq=LO_ON, amp=0.0, verbose=args.verbose)
 
     endtime = datetime.datetime.strptime(args.endtime, "%m-%d-%Y %H:%M:%S")
     while datetime.datetime.now() + datetime.timedelta(seconds=args.time) <= endtime:
@@ -252,32 +260,34 @@ def main():
             glon = new_point['lon']
 
             point = ephem.FixedBody()
-            point._ra =  ra
-            point._dec = dec
+            point._ra = np.deg2rad(ra)
+            point._dec = np.deg2rad(dec)
             point._epoch = ephem.J2000  # kevin: Hardcoding this because I don't wanna deal with it
             OBS.date = ephem.now()
             point.compute(OBS)
 
             # Skip pointing if it isn't within the observing limits
-            if (point.alt*180/np.pi-args.margin) <= ALT_LIMITS[int(point.az*180/np.pi)]:
+            if (np.rad2deg(point.alt)-args.margin) <= ALT_LIMITS[int(np.rad2deg(point.az))]:
                 in_range = False
                 skip += 1
             else:
                 in_range = True
+        logger.debug("Picked next point %s" % new_point)
+        logger.debug("Picked next point (alt, az): (%.4f, %.4f)" % (np.rad2deg(point.alt), np.rad2deg(point.az)))
 
         # Create a thread that periodically re-points the telescope
         # Set the thread to run for 2*integration time + 5 seconds for initial
         # pointing
         controller = threading.Thread(target = repoint,
-                args = (d, point, args.time*2+5, args.repoint_freq))
+                args = (d, point, args.time*2+5, args.repoint))
         controller.daemon = True
         controller.start()
         time.sleep(5) # Make sure the dish is pointed to the correct position
 
         #TODO(Check threading): replace file name
         record_pointing(d, s, glon, glat,
-            file_name='raw/l%.1f-b%.1f-%s' % (glon, glat, time.strftime("%m-%d-%Y_%H%M%S")),
-            int_time=args.time, repoint_freq=args.repoint_freq)
+            file_name='raw/l%.4f_b%.4f_%s' % (glon, glat, time.strftime("%m-%d-%Y_%H%M%S")),
+            int_time=args.time, repoint_freq=args.repoint)
         controller.join()
 
         #TODO(Vikram): add exit status or error checking to make sure data was
