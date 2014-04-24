@@ -1,5 +1,5 @@
 import numpy as np
-import datetime
+import time
 import os
 import readspec_mod
 
@@ -24,13 +24,14 @@ def average(log_in, lo, l, b, noise=False, notes=None):
     "lo", "l", "b", "noise": the parameters passed in
     """
     # name the output directory by the galactic coords of the pointing
-    pointing_dir = os.path.join(DATA, "l%.1f-b%.1f" % (l, b))
+    pointing_dir = os.path.join(DATA, "l%.4f_b%.4f" % (l, b))
     if not os.path.exists(pointing_dir):
         os.makedirs(pointing_dir)
 
     # name the file according to the lo frequency + time so it doesnt get overwritten
-    time_str = datetime.datetime.strftime(datetime.datetime.now(), "%b-%d-%H:%M:%S")
-    output_filename = "%slo-%.1f-%s" % ("noise-" if noise else "", lo, time_str)
+    time_str = time.strftime("%m-%d-%Y_%H%M%S")
+
+    output_filename = "%slo-%.1f_%s" % ("noise-" if noise else "", lo, time_str)
     spec_out = os.path.join(pointing_dir, output_filename)
 
     specs = readspec_mod.readSpec(log_in)
