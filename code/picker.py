@@ -2,9 +2,10 @@ import numpy as np
 
 
 coordinates_file = "coordinates.npz"
+coords = None
 
 
-def pick(max_N=1):
+def pick(max_N=1, skip=0):
     """Pick the next coordinate with counter N less than max_N
 
     If all coordinates have counters greater than max_N, prioritize coordinates with lowest N?
@@ -17,39 +18,46 @@ def pick(max_N=1):
         "lon": galactic longitude (l)
         "N": counter
     """
-    # assume sorted by priority
-    coords = np.load(coordinates_file)
-    for i in range(len(coords["ra"])):
-        if coords["N"][i] < max_N:
-            return dict(
-                ra=coords["ra"][i],
-                dec=coords["dec"][i],
-                lat=coords["lat"][i],
-                lon=coords["lon"][i],
-                N=coords["N"][i]
-            )
+    global coords
+    if not coords:
+        coords = np.load(coordinates_file)
 
-    # if everything has at least max_N, just start going by smallest N
-    smallest_N = np.argmin(coords["N"])
+    # assume sorted by priority
+    N_filter = coords["N"] < max_N
+    filtered = np.sum(N_filter)
+    if filtered == 0:
+        # if nothing is less than the max_N, just use the ones with the smallest N
+        max_N = np.min(coords["N"]) + 1
+        N_filter = coords["N"] < max_N
+        filtered = np.sum(N_filter)
+    if filtered <= skip:
+        # if we already have skipped everything, forget the restrictions
+        N_filter = np.ones(len(coords["N"]))
+        skip = skip % len(coords["N"])
+
     return dict(
-        ra=coords["ra"][smallest_N],
-        dec=coords["dec"][smallest_N],
-        lat=coords["lat"][smallest_N],
-        lon=coords["lon"][smallest_N],
-        N=coords["N"][smallest_N]
+        ra=coords["ra"][N_filter][skip],
+        dec=coords["dec"][N_filter][skip],
+        lat=coords["lat"][N_filter][skip],
+        lon=coords["lon"][N_filter][skip],
+        N=coords["N"][N_filter][skip]
     )
 
 
 # b is lat and l is long
-def update(l, b, N=1):
+def update(l, b, N=1, t_obs=1):
     """Increment a counter on coordinates (l, b) by N.
 
     N can be... # of samples averaged, or number of times observed. Whatever.
     We can also manipulate the N array later on to focus on certain points
     """
+    global coords
+    coords = None
+
     # cast to dict cuz you cant update the output of np.load
     coords = dict(np.load(coordinates_file))
     for i in range(len(coords["ra"])):
         if coords["lon"][i] == l and coords["lat"][i] == b:
             coords["N"][i] += N
+    coords["t_obs"][i] += t_obs
     np.savez(coordinates_file, **coords)

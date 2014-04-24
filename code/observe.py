@@ -12,6 +12,10 @@ import dish
 import dish_synth
 import take_spec
 
+import averager
+import picker
+
+
 #TODO(Kevin): check these calculations
 V_MAX = -100000                 # Maximum velocity m/s
 V_MIN = -400000                 # Minimum velocity m/s
@@ -139,7 +143,7 @@ def repoint(d, point, duration=300, repoint_freq=30.0):
         t += repoint_freq
     return
 
-def record_pointing(d, s, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"),
+def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"),
         int_time=150, repoint_freq=30):
     """Records data from a point on the sky for a specified integration time.
     Spectra for an observation at two different LO frequencies and a separate
@@ -164,18 +168,19 @@ def record_pointing(d, s, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"),
     s.set_freq(LO_ON)
     d.noise_off()
     takespec.takeSpec(file_name, numSpec=num_spec)
-
-    #TODO(Kevin): Insert averaging code
+    averager.average(file_name, lo=LO_ON, l=l, b=b)
 
     # Take 10 second measurement with the noise diode on
     d.noise_on()
     takespec.takeSpec(file_name+'_noise', numSpec=num_spec_noise)
+    averager.average(file_name+'_noise', lo=LO_ON, l=l, b=b, noise=True)
     d.noise_off()
 
     # Record spectra at the lower LO frequency
     s.set_freq(LO_OFF)
     d.noise_off()
     takespec.takeSpec(file_name+'_low', numSpec=num_spec)
+    averager.average(file_name+'_low', lo=LO_OFF, l=l, b=b)
 
     logger.debug('Finished recording data')
 
@@ -197,6 +202,7 @@ def main():
             help='record point if it is within MARGIN degrees of the altitude limit')
     parser.add_argument('--verbose', action='store_true', default=False,
             help='additional debugging output')
+    parser.add_argument('--endtime', type=str, help='datetime string in form "mm-dd-yyyy hh:mm:ss"')
     args = parser.parse_args()
 
     if args.repoint_freq <= 12:
@@ -204,6 +210,9 @@ def main():
 
     if args.time <= 0:
         raise argparse.ArgumentTypeError("Can't record for 0 seconds.")
+
+    if not args.endtime:
+        raise argparse.ArgumentError("Need to specify an endtime in the form 'mm-dd-yyyy hh:mm:ss'")
 
     logger = logging.getLogger('leuschner')
 
@@ -220,23 +229,32 @@ def main():
     d = init_dish(noise=args.noise, verbose=args.verbose)
     s = init_synth(freq=args.noise, amp=args.amp, verbose=args.verbose)
 
-    t_obs = pointings['t_obs']
+    endtime = datetime.datetime.strptime(args.endtime, "%m-%d-%Y %H:%M:%S")
+    while datetime.datetime.now() + datetime.timedelta(seconds=args.time) >= endtime:
+        in_range = False
+        skip = 0
+        while not in_range:
+            # TODO (uh): the max_N=1 obvsiouly only works on the first run... what should we do?
+            new_point = picker.pick(max_N=1, skip=skip)
+            ra = new_point['ra']
+            dec = new_point['dec']
+            # epoch = pointings['epoch']
+            glat = new_point['lat']
+            glon = new_point['lon']
 
-    for coord in range(len(pointings['ra'])):
-        ra = pointings['ra'][coord]
-        dec = pointings['dec'][coord]
-        epoch = pointings['epoch'][coord]
+            point = ephem.FixedBody()
+            point._ra =  ra
+            point._dec = dec
+            point._epoch = ephem.J2000  # kevin: Hardcoding this because I don't wanna deal with it
+            OBS.date = ephem.now()
+            point.compute(OBS)
 
-        point = ephem.FixedBody()
-        point._ra =  ra
-        point._dec = dec
-        point._epoch = epoch
-        OBS.date = ephem.now()
-        point.compute(OBS)
-
-        # Skip pointing if it isn't within the observing limits
-        if (point.alt*180/np.pi-args.margin) <= ALT_LIMITS[int(point.az*180/np.pi)]:
-            continue
+            # Skip pointing if it isn't within the observing limits
+            if (point.alt*180/np.pi-args.margin) <= ALT_LIMITS[int(point.az*180/np.pi)]:
+                in_range = False
+                skip += 1
+            else:
+                in_range = True
 
         # Create a thread that periodically re-points the telescope
         # Set the thread to run for 2*integration time + 5 seconds for initial
@@ -247,19 +265,16 @@ def main():
         controller.start()
         time.sleep(5) # Make sure the dish is pointed to the correct position
 
-        #TODO(Kevin): replace file name
         #TODO(Check threading): replace file name
-        record_pointing(d, s, file_name='../raw/'+time.strftime("%m-%d-%Y_%H%M%S"),
+        record_pointing(d, s, glon, glat,
+            file_name='raw/l%.1f-b%.1f-%s' % (glon, glat, time.strftime("%m-%d-%Y_%H%M%S")),
             int_time=args.time, repoint_freq=args.repoint_freq)
         controller.join()
 
         #TODO(Vikram): add exit status or error checking to make sure data was
         #    successfully recorded
-        t_obs[coord] += args.time
+        picker.update(glon, glat, N=1, t_obs=args.time)
 
-    np.savez(args.pointings_log, galactic=pointings['galactic'],
-            ra=pointings['ra'], dec=pointings['dec'], epoch=pointings['epoch'],
-            t_obs=tobs)
     logger.debug('Exiting')
 
 if __name__ == "__main__":

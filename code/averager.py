@@ -5,8 +5,7 @@ import readspec_mod
 
 
 # where to put averaged data
-DATA = "data" # ?
-? Make sure to set noise=True for the noise-on measurements
+DATA = "data"
 
 
 def average(log_in, lo, l, b, noise=False, notes=None):

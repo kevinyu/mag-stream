@@ -46,9 +46,9 @@ for lon,lat in coords:
 
 
 # sort it by DEC because that might be the best way to prioritize (by lowest declinations?)
-DEC, RA, Glon, Glat, N = zip(*sorted(zip(DEC, RA, Glon, Glat, [0] * len(DEC))))
+DEC, RA, Glon, Glat, N, t_obs = zip(*sorted(zip(DEC, RA, Glon, Glat, [0] * len(DEC), [0.0] * len(DEC))))
 
-np.savez('../code/coordinates.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat, N=N)
+np.savez('../code/coordinates.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat, N=N, t_obs=t_obs)
 
 # also save a copy here that won't be touched by the code
-np.savez('_coordinates.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat, N=N)
+np.savez('_coordinates.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat, N=N, t_obs=t_obs)
