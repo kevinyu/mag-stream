@@ -164,23 +164,28 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     num_spec = int_time/3
     num_spec_noise = 10/3
 
-    # Take the first measurement at the higher LO frequency
+    # Take measurement with noise diode off at the higher LO frequency (ON frequency)
     s.set_freq(LO_ON)
     d.noise_off()
-    takespec.takeSpec(file_name, numSpec=num_spec)
-    averager.average(file_name, lo=LO_ON, l=l, b=b)
+    takespec.takeSpec(file_name+'_ON', numSpec=num_spec)
+    averager.average(file_name+'_ON', lo=LO_ON, l=l, b=b)
 
-    # Take 10 second measurement with the noise diode on
+    # Take 10 second measurement with the noise diode on at the ON frequency
     d.noise_on()
-    takespec.takeSpec(file_name+'_noise', numSpec=num_spec_noise)
-    averager.average(file_name+'_noise', lo=LO_ON, l=l, b=b, noise=True)
+    takespec.takeSpec(file_name+'_ON_noise', numSpec=num_spec_noise)
+    averager.average(file_name+'_ON_noise', lo=LO_ON, l=l, b=b, noise=True)
+
+    # Take 10 second measurement with the noise diode on at the OFF frequency
+    s.set_freq(LO_OFF)
+    takespec.takeSpec(file_name+'_OFF_noise', numSpec=num_spec_noise)
+    averager.average(file_name+'_OFF_noise', lo=LO_OFF, l=l, b=b, noise=True)
     d.noise_off()
 
-    # Record spectra at the lower LO frequency
+    # Take measurement with noise diode off at the lower LO frequency (OFF frequency)
     s.set_freq(LO_OFF)
     d.noise_off()
-    takespec.takeSpec(file_name+'_low', numSpec=num_spec)
-    averager.average(file_name+'_low', lo=LO_OFF, l=l, b=b)
+    takespec.takeSpec(file_name+'_OFF', numSpec=num_spec)
+    averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b)
 
     logger.debug('Finished recording data')
 
