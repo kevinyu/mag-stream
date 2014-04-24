@@ -235,7 +235,7 @@ def main():
     s = init_synth(freq=args.noise, amp=args.amp, verbose=args.verbose)
 
     endtime = datetime.datetime.strptime(args.endtime, "%m-%d-%Y %H:%M:%S")
-    while datetime.datetime.now() + datetime.timedelta(seconds=args.time) >= endtime:
+    while datetime.datetime.now() + datetime.timedelta(seconds=args.time) <= endtime:
         in_range = False
         skip = 0
         while not in_range:
