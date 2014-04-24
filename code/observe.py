@@ -16,15 +16,19 @@ import averager
 import picker
 
 
-#TODO(Kevin): check these calculations
-V_MAX = -100000                 # Maximum velocity m/s
-V_MIN = -400000                 # Minimum velocity m/s
-C = 299792458                   # Speed of light in m/s
+V_MAX = -100000.                 # Maximum velocity m/s
+V_MIN = -400000.                 # Minimum velocity m/s
+C = 299792458.                   # Speed of light in m/s
 LAMBDA_H1 = 0.2110611405413     # Wavelength of H1 emissions in m
+NU_H1 = C / LAMBDA_H1
 
-F_C = (C + (V_MAX + V_MIN)/2)
+NU_MAX = NU_H1 * (1.0 - (V_MIN / C))
+NU_MIN = NU_H1 * (1.0 - (V_MAX / C))
 
-LO_ON = F_C - 150
+NU_MID = (NU_MAX + NU_MIN) / 2.0
+NU_MID = 1421.6  # kevin: I just rounded it and write it here cuz its easier that way
+
+LO_ON = NU_MID - 150 + 2
 LO_OFF = LO_ON - 4
 
 # Initialize Observer to lat and long for Leuschner (from Google Maps)
