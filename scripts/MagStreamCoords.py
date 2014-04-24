@@ -45,8 +45,8 @@ for lon,lat in coords:
     DEC.append(np.rad2deg(eq.dec))
 
 
-# sort it by DEC because that might be the best way to prioritize (by highest declinations?)
-DEC, RA, Glon, Glat, N = zip(*sorted(zip(DEC, RA, Glon, Glat, [0] * len(DEC)), reverse=True))
+# sort it by DEC because that might be the best way to prioritize (by lowest declinations?)
+DEC, RA, Glon, Glat, N = zip(*sorted(zip(DEC, RA, Glon, Glat, [0] * len(DEC))))
 
 np.savez('../code/coordinates.npz', ra=RA, dec=DEC, lon=Glon, lat=Glat, N=N)
 
