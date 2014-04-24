@@ -8,9 +8,9 @@ import argparse
 import ephem
 
 # Import dish control modules
-   #import dish
-   #import dish_synth
-   #import take_spec
+import dish
+import dish_synth
+import take_spec
 
 #TODO(Kevin): check these calculations
 V_MAX = -100000                 # Maximum velocity m/s
@@ -249,7 +249,7 @@ def main():
 
         #TODO(Kevin): replace file name
         #TODO(Check threading): replace file name
-        record_pointing(d, s, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"),
+        record_pointing(d, s, file_name='../raw/'+time.strftime("%m-%d-%Y_%H%M%S"),
             int_time=args.time, repoint_freq=args.repoint_freq)
         controller.join()
 
