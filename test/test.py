@@ -18,8 +18,12 @@ def main():
             help='run homing routine (warning, takes a few minutes)')
     parser.add_argument('--verbose', action='store_true', default=True,
             help='print verbose output')
-    parser.add_argument('--lon', type=float, default=220,
+    parser.add_argument('--lon', type=float, default=120,
             help='Galactic longitude to point to (deg).')
+    parser.add_argument('--lat', type=float, default=0,
+            help='Galactic latitude to point to (deg).')
+    parser.add_argument('--time', type=float, default=120,
+            help='Integration time (sec).')
     args = parser.parse_args()
 
     # Set lat and long (for Leuschner from Google Maps), and date
@@ -28,11 +32,10 @@ def main():
     obs.long = -122.153435 * np.pi/180
 
     # Compute number of spectra to record (integration time=1 min)
-    length = 60             # integration time in seconds
-    num_spec = length/3
+    num_spec = args.time/3
 
     print 'Observing galactic coordinates long=%s, lat=0'%(str(args.lon))
-    point_gal= ephem.Galactic(args.lon*np.pi/180, 0)
+    point_gal= ephem.Galactic(args.lon*np.pi/180, args.lat*np.pi/180)
     point_eq= ephem.Equatorial(point_gal)
 
     # Compute az alt
