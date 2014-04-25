@@ -39,6 +39,7 @@ This will plot sample measurements from raw/test/ with observations at 2 differe
 
 ###Main Observation Script###
 code/ directory should be copied directly over onto leuschner
+
 $ scp -r -p 31 code radiolab@leuschner.berkeley.edu:/home/radiolab/mag-stream
 
 Observation script must be run from within the code/ directory
