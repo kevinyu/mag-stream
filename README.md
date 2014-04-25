@@ -38,9 +38,9 @@ Run example
 This will plot sample measurements from raw/test/ with observations at 2 different LO frequencies both with and without the noise diode on.
 
 ###Main Observation Script###
-code/ directory should be copied directly over onto leuschner
-
-$ scp -r -p 31 code radiolab@leuschner.berkeley.edu:/home/radiolab/mag-stream
+entire code/ directory should be copied directly over onto leuschner for observation.
+I had trouble scp-ing the directory from the lab computers;
+instead, I sshed into leuschner and used scp from there. Ideally we don't have to do this again but if we do, just scp from leuschner.
 
 Observation script must be run from within the code/ directory
 
