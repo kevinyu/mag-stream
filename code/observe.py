@@ -278,11 +278,11 @@ def main():
         # Create a thread that periodically re-points the telescope
         # Set the thread to run for 2*integration time + 5 seconds for initial
         # pointing
+        d.point(np.rad2deg(point.alt), np.rad2deg(point.az))
         controller = threading.Thread(target = repoint,
                 args = (d, point, args.time*2+5, args.repoint))
         controller.daemon = True
         controller.start()
-        time.sleep(5) # Make sure the dish is pointed to the correct position
 
         #TODO(Check threading): replace file name
         record_pointing(d, s, glon, glat,
