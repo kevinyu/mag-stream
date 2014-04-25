@@ -38,6 +38,11 @@ Run example
 This will plot sample measurements from raw/test/ with observations at 2 different LO frequencies both with and without the noise diode on.
 
 ###Main Observation Script###
+code/ directory should be copied directly over onto leuschner
+$ scp -r -p 31 code radiolab@leuschner.berkeley.edu:/home/radiolab/mag-stream
+
+Observation script must be run from within the code/ directory
+
 usage: observe.py [-h] [--time TIME] [--repoint REPOINT] [--margin MARGIN]
                   [--verbose] [--endtime ENDTIME]
                   pointings_log
