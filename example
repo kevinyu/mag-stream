@@ -1,0 +1,2 @@
+code/plot_spectra.py raw/test/on_ex0.log raw/test/ns_ex0.log raw/test/off_ex0.log raw/test/ns_off_ex0.log
+rm file.npz

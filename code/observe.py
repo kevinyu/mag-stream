@@ -37,7 +37,7 @@ OBS = ephem.Observer()
 OBS.lat = np.deg2rad(37.919481)
 OBS.long = np.deg2rad(-122.153435)
 
-ALT_LIMITS = np.loadtxt('alt_limits.txt')
+ALT_LIMITS = np.loadtxt('code/alt_limits.txt')
 
 def init_log(log_name=os.getcwd()+'/logs/'+time.strftime("%m-%d-%Y_%H%M%S")):
     """ Set up logging
@@ -164,6 +164,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     """
     logger = logging.getLogger('leuschner')
     logger.debug('Recording data')
+    status = 0
 
     # Compute number of spectra to record (integration time/3)
     num_spec = int(int_time/3.)
@@ -172,26 +173,46 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     # Take measurement with noise diode off at the higher LO frequency (ON frequency)
     s.set_freq(LO_ON)
     d.noise_off()
-    takespec.takeSpec(file_name+'_ON', numSpec=num_spec)
+    try:
+        takespec.takeSpec(file_name+'_ON', numSpec=num_spec)
+    except IOError:
+        logger.error('%s not saved or averaged.' % (file_name+'_ON'))
+        status = -1
+
     averager.average(file_name+'_ON', lo=LO_ON, l=l, b=b)
 
     # Take 10 second measurement with the noise diode on at the ON frequency
     d.noise_on()
-    takespec.takeSpec(file_name+'_ON_noise', numSpec=num_spec_noise)
+    try:
+        takespec.takeSpec(file_name+'_ON_noise', numSpec=num_spec_noise)
+    except IOError:
+        logger.error('%s not saved or averaged.' % (file_name+'_ON_noise'))
+        status = -1
+
     averager.average(file_name+'_ON_noise', lo=LO_ON, l=l, b=b, noise=True)
 
     # Take 10 second measurement with the noise diode on at the OFF frequency
     s.set_freq(LO_OFF)
-    takespec.takeSpec(file_name+'_OFF_noise', numSpec=num_spec_noise)
+    try:
+        takespec.takeSpec(file_name+'_OFF_noise', numSpec=num_spec_noise)
+    except IOError:
+        logger.error('%s not saved or averaged.' % (file_name+'_OFF_noise'))
+        status = -1
+
     averager.average(file_name+'_OFF_noise', lo=LO_OFF, l=l, b=b, noise=True)
+
     d.noise_off()
 
     # Take measurement with noise diode off at the lower LO frequency (OFF frequency)
     s.set_freq(LO_OFF)
     d.noise_off()
-    takespec.takeSpec(file_name+'_OFF', numSpec=num_spec)
-    averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b)
+    try:
+        takespec.takeSpec(file_name+'_OFF', numSpec=num_spec)
+    except IOError:
+        logger.error('%s not saved or averaged.' % (file_name+'_OFF'))
+        status = -1
 
+    averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b)
     logger.debug('Finished recording data')
 
 def main():
@@ -284,14 +305,12 @@ def main():
         controller.daemon = True
         controller.start()
 
-        #TODO(Check threading): replace file name
-        record_pointing(d, s, glon, glat,
+        status = record_pointing(d, s, glon, glat,
             file_name='raw/l%.4f_b%.4f_%s' % (glon, glat, time.strftime("%m-%d-%Y_%H%M%S")),
             int_time=args.time, repoint_freq=args.repoint)
         controller.join()
 
-        #TODO(Vikram): add exit status or error checking to make sure data was
-        #    successfully recorded
+        #TODO(Kevin): status will be -1 if data was not successfully saved
         picker.update(glon, glat, N=1, t_obs=args.time)
 
     logger.debug('Exiting')

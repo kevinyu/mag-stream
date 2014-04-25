@@ -2,28 +2,50 @@ mag-stream
 ==========
 
 Magellanic Stream Project
+==========
 
+Directory Structure
+----------
+code- contains all code
+raw- contains raw data files
+raw/test- contains sample data
+
+Usage Info
+----------
+###Generating Coordinates###
 Running code/MagStreamCoords.py generates a new input file.
 
-Input file fields                                                            
-  galactic (ephem.Galactic): galactic coordinates                          
-  ra (ephem.Angle): right ascension (RA) of the point to observe           
-  dec (ephem.Angle): declination (DEC) of the point to observe             
-  epoch (ephem.Date): epoch with which RA and DEC were calculated          
-  N (int): counter for # of times observed
-  t_obs(float): seconds observed
+###Plotting spectra###
+usage: code/plot_spectra.py [-h] [--center CENTER] [--title TITLE]
+                       [--outfile OUTFILE]
+                       files [files ...]
 
-USAGE: observe.py [-h] [--endtime ENDTIME] [--time TIME] [--repoint REPOINT] [--margin MARGIN]
-                  [--verbose]
+Plot .log files on the same plot.
+
+positional arguments:
+  files              .log files to plot (full file names). Ex: plot_test.py
+                     file0.log file1.log file2.log ...
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --center CENTER    Center frequency for plot in MHz
+  --title TITLE      Plot title
+  --outfile OUTFILE  Output file name
+
+
+###Plotting sample data###
+Run example
+This will plot sample measurements from raw/test/ with observations at 2 different LO frequencies both with and without the noise diode on.
+
+###Main Observation Script###
+usage: observe.py [-h] [--time TIME] [--repoint REPOINT] [--margin MARGIN]
+                  [--verbose] [--endtime ENDTIME]
                   pointings_log
 
 Record data from the Leuschner dish.
 
 positional arguments:
   pointings_log      path to .npz file of points to observe
-
-required arguments:
-  --endtime ENDTIME  time to end observation, in the form 'mm-dd-yyyy HH:MM:SS'
 
 optional arguments:
   -h, --help         show this help message and exit
@@ -32,4 +54,5 @@ optional arguments:
   --margin MARGIN    record point if it is within MARGIN degrees of the
                      altitude limit
   --verbose          additional debugging output
+  --endtime ENDTIME  datetime string in form "mm-dd-yyyy hh:mm:ss"
 
