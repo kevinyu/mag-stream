@@ -37,7 +37,7 @@ OBS = ephem.Observer()
 OBS.lat = np.deg2rad(37.919481)
 OBS.long = np.deg2rad(-122.153435)
 
-ALT_LIMITS = np.loadtxt('code/alt_limits.txt')
+ALT_LIMITS = np.loadtxt('alt_limits.txt')
 
 def init_log(log_name=os.getcwd()+'/logs/'+time.strftime("%m-%d-%Y_%H%M%S")):
     """ Set up logging
@@ -178,8 +178,10 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     except IOError:
         logger.error('%s not saved or averaged.' % (file_name+'_ON'))
         status = -1
+    else:
+        # Only want to average if the takespec was successful!
+        averager.average(file_name+'_ON', lo=LO_ON, l=l, b=b)
 
-    averager.average(file_name+'_ON', lo=LO_ON, l=l, b=b)
 
     # Take 10 second measurement with the noise diode on at the ON frequency
     d.noise_on()
@@ -188,8 +190,8 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     except IOError:
         logger.error('%s not saved or averaged.' % (file_name+'_ON_noise'))
         status = -1
-
-    averager.average(file_name+'_ON_noise', lo=LO_ON, l=l, b=b, noise=True)
+    else:
+        averager.average(file_name+'_ON_noise', lo=LO_ON, l=l, b=b, noise=True)
 
     # Take 10 second measurement with the noise diode on at the OFF frequency
     s.set_freq(LO_OFF)
@@ -198,8 +200,8 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     except IOError:
         logger.error('%s not saved or averaged.' % (file_name+'_OFF_noise'))
         status = -1
-
-    averager.average(file_name+'_OFF_noise', lo=LO_OFF, l=l, b=b, noise=True)
+    else:
+        averager.average(file_name+'_OFF_noise', lo=LO_OFF, l=l, b=b, noise=True)
 
     d.noise_off()
 
@@ -211,8 +213,9 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     except IOError:
         logger.error('%s not saved or averaged.' % (file_name+'_OFF'))
         status = -1
+    else:
+        averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b)
 
-    averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b)
     logger.debug('Finished recording data')
 
 def main():
