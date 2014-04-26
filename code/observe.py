@@ -167,7 +167,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     status = 0
 
     # Compute number of spectra to record (integration time/3)
-    num_spec = int(int_time/3.)
+    num_spec = int(int_time*3)
     num_spec_noise = 5 * 3
 
     # Take measurement with noise diode off at the higher LO frequency (ON frequency)
