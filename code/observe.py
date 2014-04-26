@@ -166,6 +166,10 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     logger.debug('Recording data')
     status = 0
 
+    # lets us keep data from this pointing in unique directory,
+    # since each time we point we will have different noise/background spectrums
+    record_id = time.strftime("%m-%d-%Y_%H%M%S")
+
     # Compute number of spectra to record (integration time/3)
     num_spec = int(int_time*3)
     num_spec_noise = 5 * 3
@@ -180,7 +184,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         status = -1
     else:
         # Only want to average if the takespec was successful!
-        averager.average(file_name+'_ON', lo=LO_ON, l=l, b=b)
+        averager.average(file_name+'_ON', lo=LO_ON, l=l, b=b, record_id=record_id)
 
 
     # Take 10 second measurement with the noise diode on at the ON frequency
@@ -191,7 +195,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         logger.error('%s not saved or averaged.' % (file_name+'_ON_noise'))
         status = -1
     else:
-        averager.average(file_name+'_ON_noise', lo=LO_ON, l=l, b=b, noise=True)
+        averager.average(file_name+'_ON_noise', lo=LO_ON, l=l, b=b, record_id=record_id, noise=True)
 
     # Take 10 second measurement with the noise diode on at the OFF frequency
     s.set_freq(LO_OFF)
@@ -201,7 +205,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         logger.error('%s not saved or averaged.' % (file_name+'_OFF_noise'))
         status = -1
     else:
-        averager.average(file_name+'_OFF_noise', lo=LO_OFF, l=l, b=b, noise=True)
+        averager.average(file_name+'_OFF_noise', lo=LO_OFF, l=l, b=b, record_id=record_id, noise=True)
 
     d.noise_off()
 
@@ -214,7 +218,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         logger.error('%s not saved or averaged.' % (file_name+'_OFF'))
         status = -1
     else:
-        averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b)
+        averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b, record_id=record_id)
 
     logger.debug('Finished recording data')
 
