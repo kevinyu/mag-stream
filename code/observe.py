@@ -281,10 +281,12 @@ def main():
     d = init_dish(verbose=args.verbose)
     s = init_synth(freq=LO_ON, amp=0.0, verbose=args.verbose)
 
-    while datetime.datetime.now() + datetime.timedelta(seconds=args.time) <= endtime:
+    while datetime.datetime.now() + datetime.timedelta(seconds=2*args.time+5) <= endtime:
         in_range = False
         skip = 0
         while not in_range:
+            if (datetime.datetime.now() + datetime.timedelta(seconds=2*args.time+5) <= endtime):
+                break
             # TODO (uh): the max_N=1 obvsiouly only works on the first run... what should we do?
             new_point = picker.pick(max_N=1, skip=skip)
             ra = new_point['ra']
@@ -303,9 +305,12 @@ def main():
             # Skip pointing if it isn't within the observing limits
             if (np.rad2deg(point.alt)-args.margin) <= ALT_LIMITS[int(np.rad2deg(point.az))]:
                 in_range = False
+                logger.debug("Skipping (%s, %s) for the greater good." % (np.rad2deg(point.az), np.rad2deg(point.alt)))
                 skip += 1
             else:
                 in_range = True
+        if not in_range:
+            break
         logger.debug("Picked next point %s" % new_point)
         logger.debug("Picked next point (alt, az): (%.4f, %.4f)" % (np.rad2deg(point.alt), np.rad2deg(point.az)))
 
