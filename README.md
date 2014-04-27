@@ -12,6 +12,18 @@ raw/test- contains sample data
 
 Usage Info
 ----------
+###Scheduling Observations###
+Run schedule
+This script will schedule a cron job at a specified time.
+This can be tested by running crontab -l and making sure that the appropriate
+job shows up.
+
+Any command line output (stdout, stderr) are logged in cronlog.
+
+NOTE: currently the mag-stream directory on heiles isn't the same as the git
+repository (may cause errors if you try to run schedule on a different
+computer)
+
 ###Generating Coordinates###
 Running code/MagStreamCoords.py generates a new input file.
 

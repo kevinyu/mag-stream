@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+import sys
+sys.path.append('/home/radiolab/ugradio/ugradio_code')
+sys.path.append('/home/radiolab/mag-stream')
+
 import logging
 import os
 import numpy as np
@@ -16,6 +20,7 @@ import takespec
 import averager
 import picker
 
+PATH = '/home/radiolab/mag-stream'
 
 V_MAX = -100000.                 # Maximum velocity m/s
 V_MIN = -400000.                 # Minimum velocity m/s
@@ -37,9 +42,9 @@ OBS = ephem.Observer()
 OBS.lat = np.deg2rad(37.919481)
 OBS.long = np.deg2rad(-122.153435)
 
-ALT_LIMITS = np.loadtxt('alt_limits.txt')
+ALT_LIMITS = np.loadtxt('%s/alt_limits.txt'%PATH)
 
-def init_log(log_name=os.getcwd()+'/logs/'+time.strftime("%m-%d-%Y_%H%M%S")):
+def init_log(log_name=PATH+'/logs/'+time.strftime("%m-%d-%Y_%H%M%S")):
     """ Set up logging
     Args:
         log_name (String, optional): path and name of log file to be written
@@ -166,8 +171,12 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     logger.debug('Recording data')
     status = 0
 
+    # lets us keep data from this pointing in unique directory,
+    # since each time we point we will have different noise/background spectrums
+    record_id = time.strftime("%m-%d-%Y_%H%M%S")
+
     # Compute number of spectra to record (integration time/3)
-    num_spec = int(int_time/3.)
+    num_spec = int(int_time*3)
     num_spec_noise = 5 * 3
 
     # Take measurement with noise diode off at the higher LO frequency (ON frequency)
@@ -180,7 +189,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         status = -1
     else:
         # Only want to average if the takespec was successful!
-        averager.average(file_name+'_ON', lo=LO_ON, l=l, b=b)
+        averager.average(file_name+'_ON', lo=LO_ON, l=l, b=b, record_id=record_id)
 
 
     # Take 10 second measurement with the noise diode on at the ON frequency
@@ -191,7 +200,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         logger.error('%s not saved or averaged.' % (file_name+'_ON_noise'))
         status = -1
     else:
-        averager.average(file_name+'_ON_noise', lo=LO_ON, l=l, b=b, noise=True)
+        averager.average(file_name+'_ON_noise', lo=LO_ON, l=l, b=b, record_id=record_id, noise=True)
 
     # Take 10 second measurement with the noise diode on at the OFF frequency
     s.set_freq(LO_OFF)
@@ -201,7 +210,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         logger.error('%s not saved or averaged.' % (file_name+'_OFF_noise'))
         status = -1
     else:
-        averager.average(file_name+'_OFF_noise', lo=LO_OFF, l=l, b=b, noise=True)
+        averager.average(file_name+'_OFF_noise', lo=LO_OFF, l=l, b=b, record_id=record_id, noise=True)
 
     d.noise_off()
 
@@ -214,7 +223,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         logger.error('%s not saved or averaged.' % (file_name+'_OFF'))
         status = -1
     else:
-        averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b)
+        averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b, record_id=record_id)
 
     logger.debug('Finished recording data')
 
@@ -239,12 +248,12 @@ def main():
     parser.add_argument('--endtime', type=str, help='datetime string in form "mm-dd-yyyy hh:mm:ss"')
     args = parser.parse_args()
 
-    if not os.path.exists("raw"):
-        os.mkdir("raw")
-    if not os.path.exists("logs"):
-        os.mkdir("logs")
-    if not os.path.exists("data"):
-        os.mkdir("data")
+    if not os.path.exists("%s/raw"%(PATH)):
+        os.mkdir("%s/raw"%(PATH))
+    if not os.path.exists("%s/logs"%(PATH)):
+        os.mkdir("%s/logs"%(PATH))
+    if not os.path.exists("%s/data"%(PATH)):
+        os.mkdir("%s/data"%(PATH))
 
     if args.repoint <= 12:
         raise argparse.ArgumentTypeError("Can't repoint more often than every 12 seconds.")
@@ -258,7 +267,7 @@ def main():
     logger = logging.getLogger('leuschner')
 
     init_log()
-    pointings = np.load(args.pointings_log)
+    pointings = np.load('%s/%s'%(PATH, args.pointings_log))
 
     logger.debug('Date: %s', str(OBS.date))
     logger.debug('Observer Latitude: %s', str(OBS.lat))
@@ -266,11 +275,12 @@ def main():
     logger.debug('LO frequency: %s',  str(LO_ON))
     logger.debug('LO off frequency: %s',  str(LO_OFF))
 
+    endtime = datetime.datetime.strptime(args.endtime, "%m-%d-%Y %H:%M:%S")
+
     # Create dish and synthesizer interfaces
     d = init_dish(verbose=args.verbose)
     s = init_synth(freq=LO_ON, amp=0.0, verbose=args.verbose)
 
-    endtime = datetime.datetime.strptime(args.endtime, "%m-%d-%Y %H:%M:%S")
     while datetime.datetime.now() + datetime.timedelta(seconds=args.time) <= endtime:
         in_range = False
         skip = 0
@@ -309,7 +319,7 @@ def main():
         controller.start()
 
         status = record_pointing(d, s, glon, glat,
-            file_name='raw/l%.4f_b%.4f_%s' % (glon, glat, time.strftime("%m-%d-%Y_%H%M%S")),
+            file_name=PATH+'raw/l%.4f_b%.4f_%s' % (glon, glat, time.strftime("%m-%d-%Y_%H%M%S")),
             int_time=args.time, repoint_freq=args.repoint)
         controller.join()
 

@@ -1,0 +1,3 @@
+crontab -l > tabs
+/home/radiolab/mag-stream/schedule.py
+crontab tabs
