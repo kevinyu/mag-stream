@@ -8,7 +8,7 @@ import readspec_mod
 DATA = "data"
 
 
-def average(log_in, lo, l, b, noise=False, notes=None):
+def average(log_in, lo, l, b, record_id, noise=False, notes=None):
     """Averages spectra in a .log file and saves average to .npz with metadata
 
     Arguments:
@@ -24,7 +24,7 @@ def average(log_in, lo, l, b, noise=False, notes=None):
     "lo", "l", "b", "noise": the parameters passed in
     """
     # name the output directory by the galactic coords of the pointing
-    pointing_dir = os.path.join(DATA, "l%.4f_b%.4f" % (l, b))
+    pointing_dir = os.path.join(DATA, "l%.4f_b%.4f_%s" % (l, b, record_id))
     if not os.path.exists(pointing_dir):
         os.makedirs(pointing_dir)
 
