@@ -5,7 +5,7 @@ import readspec_mod
 
 
 # where to put averaged data
-DATA = "data"
+DATA = "/home/radiolab/mag-stream/data"
 
 
 def average(log_in, lo, l, b, record_id, noise=False, notes=None):
