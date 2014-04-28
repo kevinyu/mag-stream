@@ -42,9 +42,9 @@ OBS = ephem.Observer()
 OBS.lat = np.deg2rad(37.919481)
 OBS.long = np.deg2rad(-122.153435)
 
-ALT_LIMITS = np.loadtxt('%s/alt_limits.txt'%PATH)
+ALT_LIMITS = np.loadtxt(os.path.join(PATH, 'alt_limits.txt')
 
-def init_log(log_name=PATH+'/logs/'+time.strftime("%m-%d-%Y_%H%M%S")):
+def init_log(log_name=os.path.join(PATH, 'logs', time.strftime("%m-%d-%Y_%H%M%S"))):
     """ Set up logging
     Args:
         log_name (String, optional): path and name of log file to be written
@@ -179,8 +179,13 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
     num_spec = int(int_time*3)
     num_spec_noise = 5 * 3
 
+    OBS.date = ephem.now()
+    point.compute(OBS)
+    d.point(np.rad2deg(point.alt), np.rad2deg(point.az))
+
     # Take measurement with noise diode off at the higher LO frequency (ON frequency)
     s.set_freq(LO_ON)
+    s.set_amp(10.0)
     d.noise_off()
     try:
         takespec.takeSpec(file_name+'_ON', numSpec=num_spec)
@@ -189,8 +194,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         status = -1
     else:
         # Only want to average if the takespec was successful!
-        averager.average(file_name+'_ON', lo=LO_ON, l=l, b=b, record_id=record_id)
-
+        averager.average(file_name+'_ON0.log', lo=LO_ON, l=l, b=b, record_id=record_id)
 
     # Take 10 second measurement with the noise diode on at the ON frequency
     d.noise_on()
@@ -200,22 +204,29 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         logger.error('%s not saved or averaged.' % (file_name+'_ON_noise'))
         status = -1
     else:
-        averager.average(file_name+'_ON_noise', lo=LO_ON, l=l, b=b, record_id=record_id, noise=True)
+        averager.average(file_name+'_ON_noise0.log', lo=LO_ON, l=l, b=b, record_id=record_id, noise=True)
+
+    # repoint for the second half of the measurement
+    OBS.date = ephem.now()
+    point.compute(OBS)
+    d.point(np.rad2deg(point.alt), np.rad2deg(point.az))
 
     # Take 10 second measurement with the noise diode on at the OFF frequency
     s.set_freq(LO_OFF)
+    s.set_amp(10.0)
     try:
         takespec.takeSpec(file_name+'_OFF_noise', numSpec=num_spec_noise)
     except IOError:
         logger.error('%s not saved or averaged.' % (file_name+'_OFF_noise'))
         status = -1
     else:
-        averager.average(file_name+'_OFF_noise', lo=LO_OFF, l=l, b=b, record_id=record_id, noise=True)
+        averager.average(file_name+'_OFF_noise0.log', lo=LO_OFF, l=l, b=b, record_id=record_id, noise=True)
 
     d.noise_off()
 
     # Take measurement with noise diode off at the lower LO frequency (OFF frequency)
     s.set_freq(LO_OFF)
+    s.set_amp(10.0)
     d.noise_off()
     try:
         takespec.takeSpec(file_name+'_OFF', numSpec=num_spec)
@@ -223,7 +234,7 @@ def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"
         logger.error('%s not saved or averaged.' % (file_name+'_OFF'))
         status = -1
     else:
-        averager.average(file_name+'_OFF', lo=LO_OFF, l=l, b=b, record_id=record_id)
+        averager.average(file_name+'_OFF0.log', lo=LO_OFF, l=l, b=b, record_id=record_id)
 
     logger.debug('Finished recording data')
 
@@ -248,12 +259,12 @@ def main():
     parser.add_argument('--endtime', type=str, help='datetime string in form "mm-dd-yyyy hh:mm:ss"')
     args = parser.parse_args()
 
-    if not os.path.exists("%s/raw"%(PATH)):
-        os.mkdir("%s/raw"%(PATH))
-    if not os.path.exists("%s/logs"%(PATH)):
-        os.mkdir("%s/logs"%(PATH))
-    if not os.path.exists("%s/data"%(PATH)):
-        os.mkdir("%s/data"%(PATH))
+    if not os.path.exists(os.path.join(PATH), "raw"):
+        os.mkdir(os.path.join(PATH), "raw")
+    if not os.path.exists(os.path.join(PATH), "logs"):
+        os.mkdir(os.path.join(PATH), "logs")
+    if not os.path.exists(os.path.join(PATH), "data"):
+        os.mkdir(os.path.join(PATH), "data")
 
     if args.repoint <= 12:
         raise argparse.ArgumentTypeError("Can't repoint more often than every 12 seconds.")
@@ -267,7 +278,7 @@ def main():
     logger = logging.getLogger('leuschner')
 
     init_log()
-    pointings = np.load('%s/%s'%(PATH, args.pointings_log))
+    pointings = np.load(os.path.join(PATH, args.pointings_log))
 
     logger.debug('Date: %s', str(OBS.date))
     logger.debug('Observer Latitude: %s', str(OBS.lat))
@@ -302,6 +313,14 @@ def main():
             OBS.date = ephem.now()
             point.compute(OBS)
 
+            try:
+                dish.pointing.az_alt_to_xy(np.rad2deg(point.az), np.rad2deg(point.alt) - args.margin)
+            except ValueError:
+                in_range = False
+                logger.debug("Skipping (%s, %s) for due to reasons." % (np.rad2deg(point.az), np.rad2deg(point.alt)))
+                skip += 1
+                continue
+
             # Skip pointing if it isn't within the observing limits
             if (np.rad2deg(point.alt)-args.margin) <= ALT_LIMITS[int(np.rad2deg(point.az))]:
                 in_range = False
@@ -314,19 +333,19 @@ def main():
         logger.debug("Picked next point %s" % new_point)
         logger.debug("Picked next point (alt, az): (%.4f, %.4f)" % (np.rad2deg(point.alt), np.rad2deg(point.az)))
 
+        # CANT LAUNCH SEPARATE THREAD BECAUSE 2 THREADS CANT USE DISH
         # Create a thread that periodically re-points the telescope
         # Set the thread to run for 2*integration time + 5 seconds for initial
         # pointing
-        d.point(np.rad2deg(point.alt), np.rad2deg(point.az))
-        controller = threading.Thread(target = repoint,
-                args = (d, point, args.time*2+5, args.repoint))
-        controller.daemon = True
-        controller.start()
+        # controller = threading.Thread(target = repoint,
+        #         args = (d, point, args.time*2+5, args.repoint))
+        # controller.daemon = True
+        # controller.start()
 
         status = record_pointing(d, s, glon, glat,
-            file_name=PATH+'raw/l%.4f_b%.4f_%s' % (glon, glat, time.strftime("%m-%d-%Y_%H%M%S")),
+            file_name=os.path.join(PATH, 'raw', 'l%.4f_b%.4f_%s' % (glon, glat, time.strftime("%m-%d-%Y_%H%M%S"))),
             int_time=args.time, repoint_freq=args.repoint)
-        controller.join()
+        # controller.join()
 
         #TODO(Kevin): status will be -1 if data was not successfully saved
         picker.update(glon, glat, N=1, t_obs=args.time)
