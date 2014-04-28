@@ -153,7 +153,7 @@ def repoint(d, point, duration=300, repoint_freq=30.0):
         t += repoint_freq
     return
 
-def record_pointing(d, s, l, b, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"),
+def record_pointing(d, s, l, b, point, file_name='raw/'+time.strftime("%m-%d-%Y_%H%M%S"),
         int_time=150, repoint_freq=30):
     """Records data from a point on the sky for a specified integration time.
     Spectra for an observation at two different LO frequencies and a separate
@@ -292,11 +292,11 @@ def main():
     d = init_dish(verbose=args.verbose)
     s = init_synth(freq=LO_ON, amp=10.0, verbose=args.verbose)
 
-    while datetime.datetime.now() + datetime.timedelta(seconds=2*args.time+5) <= endtime:
+    while datetime.datetime.now() + datetime.timedelta(seconds=2*args.time+10) <= endtime:
         in_range = False
         skip = 0
         while not in_range:
-            if (datetime.datetime.now() + datetime.timedelta(seconds=2*args.time+5) <= endtime):
+            if (datetime.datetime.now() + datetime.timedelta(seconds=2*args.time+10) > endtime):
                 break
             # TODO (uh): the max_N=1 obvsiouly only works on the first run... what should we do?
             new_point = picker.pick(max_N=1, skip=skip)
@@ -342,7 +342,7 @@ def main():
         # controller.daemon = True
         # controller.start()
 
-        status = record_pointing(d, s, glon, glat,
+        status = record_pointing(d, s, glon, glat, point,
             file_name=os.path.join(PATH, 'raw', 'l%.4f_b%.4f_%s' % (glon, glat, time.strftime("%m-%d-%Y_%H%M%S"))),
             int_time=args.time, repoint_freq=args.repoint)
         # controller.join()
