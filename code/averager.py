@@ -5,7 +5,7 @@ import readspec_mod
 
 
 # where to put averaged data
-DATA = "data"
+DATA = "/home/radiolab/mag-stream/data"
 
 
 def average(log_in, lo, l, b, record_id, noise=False, notes=None):
@@ -36,5 +36,5 @@ def average(log_in, lo, l, b, record_id, noise=False, notes=None):
 
     specs = readspec_mod.readSpec(log_in)
     averaged_spec = np.mean(specs, 1)
-    np.savez(spec_out, spec=averaged_spec, lo=lo, N=specs.shape[0],
+    np.savez(spec_out, spec=averaged_spec, lo=lo, N=specs.shape[1],
             l=l, b=b, noise=noise, notes=notes)

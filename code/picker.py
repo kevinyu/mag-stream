@@ -1,7 +1,7 @@
 import numpy as np
 
 
-coordinates_file = "coordinates.npz"
+coordinates_file = "/home/radiolab/mag-stream/coordinates.npz"
 coords = None
 
 

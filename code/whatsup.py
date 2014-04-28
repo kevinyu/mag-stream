@@ -1,13 +1,28 @@
+"""
+Script for showing where an array of RA, DEC coordinates are in the sky at a certain time
+Observer location is hard-coded to (LONG, LAT): (-122.2573 deg, 37.8732 deg)
+
+Positional Argument:
+    A .npz file containing an "ra" and "dec" array for the grid of points (J2000). Make sure its in DEGREES.
+
+Optional Argument:
+    --time : A string in the form "mm-dd-yyyy HH:MM:SS". If not given, the script defaults to showing the points as they currently appear in the sky
+
+Output:
+    Plot of the grid of points provided in (az, alt) in degrees. Shaded region is where the telescope is out of range.
+
+example usage:
+$ python whatsup.py coordinates.npz --time="04-25-2014 12:00:00"
+
+"""
+
 import numpy as np
+import argparse
 import datetime
 import ephem
 
 import matplotlib.pyplot as plt
 
-
-coordinates_file = "coordinates.npz"
-
-coords = np.load(coordinates_file)
 
 LONG = -122.2573  # deg
 LAT = 37.8732  # deg
@@ -18,9 +33,7 @@ obs.lat = np.deg2rad(LAT)
 ALT_LIMITS = np.loadtxt('alt_limits.txt')
 
 plt.figure()
-def show(time=0.0):
-    # print obs.date
-    # alright boys here we go
+def show(coords, time):
     if time:
         dt = (datetime.datetime.strptime(time, "%m-%d-%Y %H:%M:%S") - datetime.datetime.now()).total_seconds()
     else:
@@ -50,4 +63,10 @@ def show(time=0.0):
     plt.show()
 
 
-show()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Show location of points in the sky')
+    parser.add_argument('coords_file', help='path to .npz file with "ra" and "dec" arrays')
+    parser.add_argument('--time', type=str, default="", help='time to check in form "mm-dd-yyyy HH:MM:SS"')
+    args = parser.parse_args()
+
+    show(np.load(args.coords_file), time=args.time)
