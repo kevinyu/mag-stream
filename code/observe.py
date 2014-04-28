@@ -42,7 +42,7 @@ OBS = ephem.Observer()
 OBS.lat = np.deg2rad(37.919481)
 OBS.long = np.deg2rad(-122.153435)
 
-ALT_LIMITS = np.loadtxt(os.path.join(PATH, 'alt_limits.txt')
+ALT_LIMITS = np.loadtxt(os.path.join(PATH, 'alt_limits.txt'))
 
 def init_log(log_name=os.path.join(PATH, 'logs', time.strftime("%m-%d-%Y_%H%M%S"))):
     """ Set up logging
@@ -259,12 +259,12 @@ def main():
     parser.add_argument('--endtime', type=str, help='datetime string in form "mm-dd-yyyy hh:mm:ss"')
     args = parser.parse_args()
 
-    if not os.path.exists(os.path.join(PATH), "raw"):
-        os.mkdir(os.path.join(PATH), "raw")
-    if not os.path.exists(os.path.join(PATH), "logs"):
-        os.mkdir(os.path.join(PATH), "logs")
-    if not os.path.exists(os.path.join(PATH), "data"):
-        os.mkdir(os.path.join(PATH), "data")
+    if not os.path.exists(os.path.join(PATH, "raw")):
+        os.mkdir(os.path.join(PATH, "raw"))
+    if not os.path.exists(os.path.join(PATH, "logs")):
+        os.mkdir(os.path.join(PATH, "logs"))
+    if not os.path.exists(os.path.join(PATH, "data")):
+        os.mkdir(os.path.join(PATH, "data"))
 
     if args.repoint <= 12:
         raise argparse.ArgumentTypeError("Can't repoint more often than every 12 seconds.")
