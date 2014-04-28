@@ -290,7 +290,7 @@ def main():
 
     # Create dish and synthesizer interfaces
     d = init_dish(verbose=args.verbose)
-    s = init_synth(freq=LO_ON, amp=0.0, verbose=args.verbose)
+    s = init_synth(freq=LO_ON, amp=10.0, verbose=args.verbose)
 
     while datetime.datetime.now() + datetime.timedelta(seconds=2*args.time+5) <= endtime:
         in_range = False
