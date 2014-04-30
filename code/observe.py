@@ -295,11 +295,17 @@ def main():
     while datetime.datetime.now() + datetime.timedelta(seconds=2*args.time+10) <= endtime:
         in_range = False
         skip = 0
+        max_N = 1
         while not in_range:
             if (datetime.datetime.now() + datetime.timedelta(seconds=2*args.time+10) > endtime):
                 break
             # TODO (uh): the max_N=1 obvsiouly only works on the first run... what should we do?
-            new_point = picker.pick(max_N=1, skip=skip)
+            new_point = picker.pick(max_N=max_N, skip=skip)
+            if type(new_point) == int:
+                skip = 0
+                max_N += 1
+                continue
+
             ra = new_point['ra']
             dec = new_point['dec']
             # epoch = pointings['epoch']
