@@ -28,7 +28,27 @@ computer)
 Running code/MagStreamCoords.py generates a new input file.
 
 ###Plotting spectra###
-Example: code/plot_spectra.py data/l77.6952_b-70.0000_04-29-2014_091705/
+Example: code/plot_spectra.py data/l77.6952_b-70.0000_04-29-2014_091705/ --median
+
+usage: plot_spectra.py [-h] [--median] [--files FILES [FILES ...]]
+                       [--center CENTER] [--title TITLE] [--outfile OUTFILE]
+                       dir_name
+
+Plot spectra.
+
+positional arguments:
+  dir_name              directory to plot. Ex: plot_spectra.py
+                        data/l82.7631_b-80.0000_04-29-2014_092848/
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --median              Apply a length 5 median filter
+  --files FILES [FILES ...]
+                        .log files to plot (full file names). Ex: plot_test.py
+                        file0.log file1.log file2.log ...
+  --center CENTER       Center frequency for plot in MHz
+  --title TITLE         Plot title
+  --outfile OUTFILE     Output file name
 
 ###Plotting sample data###
 Run example
