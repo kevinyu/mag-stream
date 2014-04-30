@@ -1,0 +1,25 @@
+f1_noise = np.load("noise-lo-1269.6_04-29-2014_132304.npz")
+f1 = np.load("lo-1269.6_04-29-2014_132518.npz")
+f2_noise = np.load("noise-lo-1273.6_04-29-2014_132217.npz")
+f2 = np.load("lo-1273.6_04-29-2014_132151.npz")
+f1["spec"]
+plot(f1["spec"])
+plot(f1_noise["spec"])
+plot(f2_noise["spec"])
+plot(f2["spec"])
+np.mean(f2_noise["spec"])/np.mean(f2["spec])
+np.mean(f2_noise["spec"])/np.mean(f2["spec"])
+1/(np.mean(f2_noise["spec"])/np.mean(f2["spec"])-1)*100
+100*np.mean(f2_noise["spec"])/np.mean(f2["spec"])-100
+1/(np.mean(f2_noise["spec"])/np.mean(f2["spec"])-1)*100
+np.mean(f2["spec"])/np.mean(f1["spec"])
+np.mean(f2["spec"])/np.mean(f1["spec"])
+(f2_noise["spec"] - f2["spec"]) / (f1_noise["spec"] - f1["spec"])
+g2g1 = _
+figure()
+plot(f2["spec"])
+plot(g2g1 * f1["spec"])
+plot(np.mean(g2g1) * f1["spec"])
+plot(f1["spec"]/np.mean(g2g1))
+%history
+
