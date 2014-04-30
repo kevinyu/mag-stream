@@ -28,22 +28,7 @@ computer)
 Running code/MagStreamCoords.py generates a new input file.
 
 ###Plotting spectra###
-usage: code/plot_spectra.py [-h] [--center CENTER] [--title TITLE]
-                       [--outfile OUTFILE]
-                       files [files ...]
-
-Plot .log files on the same plot.
-
-positional arguments:
-  files              .log files to plot (full file names). Ex: plot_test.py
-                     file0.log file1.log file2.log ...
-
-optional arguments:
-  -h, --help         show this help message and exit
-  --center CENTER    Center frequency for plot in MHz
-  --title TITLE      Plot title
-  --outfile OUTFILE  Output file name
-
+Example: code/plot_spectra.py data/l77.6952_b-70.0000_04-29-2014_091705/
 
 ###Plotting sample data###
 Run example
