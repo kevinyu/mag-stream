@@ -31,9 +31,12 @@ def pick(max_N=1, skip=0):
         N_filter = coords["N"] < max_N
         filtered = np.sum(N_filter)
     if filtered <= skip:
-        # if we already have skipped everything, forget the restrictions
-        N_filter = np.array([True] * len(coords["N"]))
-        skip = skip % len(coords["N"])
+        # if we already have skipped everything, tell observe.py to increase max_N
+        if max_N <= np.max(coords["N"]):
+            return max_N + 1
+        else:
+            N_filter = np.array([True] * len(coords["N"]))
+            skip = skip % len(coords["N"])
 
     return dict(
         ra=coords["ra"][N_filter][skip],
